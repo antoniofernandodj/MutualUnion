@@ -15,7 +15,10 @@ class Oferta(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     
     produto_id: Mapped[int] = mapped_column(FK("mercadoria.id"))
-    produto: Mapped[Usuario] = rel(Mercadoria, backref="produtos", foreign_keys=[produto_id])
+    produto: Mapped[Mercadoria] = rel(Mercadoria, backref="produtos", foreign_keys=[produto_id])
     
     usuario_id: Mapped[int] = mapped_column(FK("usuario.id"))
     usuario: Mapped[Mercadoria] = rel(Usuario, backref="ofertas", foreign_keys=[usuario_id])
+
+    def __repr__(self):
+        return f'Oferta {{ usuario_id:{self.usuario_id}, produto_id:{self.produto_id} }}'

@@ -20,3 +20,7 @@ class Demanda(Base):
     produto: Mapped[Usuario] = rel(Mercadoria, backref="produtos_demanda", foreign_keys=[produto_id])
 
     usuario_id: Mapped[int] = mapped_column(FK("usuario.id"))
+    usuario: Mapped[Mercadoria] = rel(Usuario, backref="demandas", foreign_keys=[usuario_id])
+    
+    def __repr__(self):
+        return f'Demanda {{ usuario_id:{self.usuario_id}, produto_id:{self.produto_id} }}'

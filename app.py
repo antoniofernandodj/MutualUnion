@@ -2,6 +2,8 @@ from sqlalchemy.orm import Session
 from src.models import engine
 from typing import List, Tuple, Optional, Callable
 from pprint import pprint
+import networkx as nx
+import matplotlib.pyplot as plt
 
 from src import popular_o_banco_de_dados
 
@@ -40,54 +42,78 @@ def usuarios_nao_atendidos(
             
     return nao_atendidos_demanda, nao_atendidos_oferta
 
-
-def encadear(pedidos: List[Pedido]) -> List[Correspondencia]:
+def encontrar_correspondencias(pedidos: List[Pedido]) -> List[Correspondencia]:
     
     ofertas: List[Oferta] = []
     demandas: List[Demanda] = []
     
-    for pedido in pedidos:
-        oferta = session.query(Oferta).filter_by(id=pedido.oferta_id).first()
-        demanda = session.query(Demanda).filter_by(id=pedido.demanda_id).first()
+    with Session(engine) as session:
         
-        ofertas.append(oferta)
-        demandas.append(demanda)
-
-    correspondencias = []
-    
-    for oferta in ofertas:
-        for demanda in demandas:
+        for pedido in pedidos:
+            oferta = session.query(Oferta).filter_by(id=pedido.oferta_id).first()
+            demanda = session.query(Demanda).filter_by(id=pedido.demanda_id).first()
             
-            if (oferta.produto_id == demanda.produto_id and
-                oferta.usuario_id != demanda.usuario_id):
-               
-                correspondencias.append(Correspondencia(
-                    oferta_id=oferta.id,
-                    demanda_id=demanda.id,
-                    pontuacao=0
-                ))
-                
-    usuarios_ofertas = [oferta.usuario_id for oferta in ofertas]
-    usuarios_demandas = [demanda.usuario_id for demanda in demandas]
-    
-    nao_atendidos_de, nao_atendidos_para = usuarios_nao_atendidos(
-        usuarios_pedidos=usuarios_ofertas + usuarios_demandas,
-        correspondencias=correspondencias
-    )
-    
-    if nao_atendidos_de or nao_atendidos_para:
-        msg = 'Usuarios não inclusos! De: {}, Para: {}'.format(
-            str(nao_atendidos_de), str(nao_atendidos_para)
+            ofertas.append(oferta)
+            demandas.append(demanda)
+            
+        G = nx.DiGraph()
+        
+        for pedido in pedidos:
+            G.add_node(pedido.id)
+        
+        for node_a in G.nodes:
+            pedido1: Pedido = session.query(Pedido).filter_by(id=node_a).first()
+            for node_b in G.nodes:
+                if node_a != node_b:
+                    pedido2: Pedido = session.query(Pedido).filter_by(id=node_b).first()
+   
+                    if ( pedido1.oferta.produto.id == pedido2.demanda.produto.id and
+                        pedido1.usuario_id != pedido2.usuario_id):
+                        
+                        G.add_edge(
+                            u_of_edge=pedido1.id,
+                            v_of_edge=pedido2.id
+                        )
+                        
+        nx.draw(G, with_labels=True)
+        print(G.edges)
+        plt.savefig('image.png')
+
+        correspondencias = []
+        for pedido_oferta_id, pedido_demanda_id in G.edges():
+
+            pedido_oferta = session.query(Pedido).filter_by(id=pedido_oferta_id).first()
+            pedido_demanda = session.query(Pedido).filter_by(id=pedido_demanda_id).first()
+
+            correspondencia = Correspondencia(
+                oferta_id=pedido_oferta.oferta.id,
+                demanda_id=pedido_demanda.demanda.id,
+                pontuacao=0
+            )
+            correspondencias.append(correspondencia)
+        
+        usuarios_ofertas = [oferta.usuario_id for oferta in ofertas]
+        usuarios_demandas = [demanda.usuario_id for demanda in demandas]
+        
+        nao_atendidos_de, nao_atendidos_para = usuarios_nao_atendidos(
+            usuarios_pedidos=usuarios_ofertas + usuarios_demandas,
+            correspondencias=correspondencias
         )
+        
+        if nao_atendidos_de or nao_atendidos_para:
+            msg = 'Usuarios não inclusos! De: {}, Para: {}'.format(
+                str(nao_atendidos_de), str(nao_atendidos_para)
+            )
 
-        raise RuntimeError(msg)
-    
-    return correspondencias
-
+            raise RuntimeError(msg)
+        else:
+            print("Correspondencias válidas")
+        
+        
+        return correspondencias
 
 with Session(engine) as session:
-    pedidos = session.query(Pedido).all()
-      
-    transacoes = encadear(pedidos=pedidos)
     
-    pprint(transacoes)
+    pedidos = session.query(Pedido).all()
+    correspondencias = encontrar_correspondencias(pedidos=pedidos)
+    pprint(correspondencias)

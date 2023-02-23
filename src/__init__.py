@@ -39,10 +39,10 @@ def criar_ofertas():
         oferta = session.query(Oferta).first()
         if not oferta:
             ofertas = [
-                Oferta(usuario_id=1, produto_id=1),
-                Oferta(usuario_id=2, produto_id=2),
-                Oferta(usuario_id=3, produto_id=3),
-                Oferta(usuario_id=4, produto_id=4),
+                Oferta(id=1, usuario_id=1, produto_id=1),
+                Oferta(id=2, usuario_id=2, produto_id=2),
+                Oferta(id=3, usuario_id=3, produto_id=3),
+                Oferta(id=4, usuario_id=4, produto_id=4),
             ]
             for oferta in ofertas:
                 session.add(oferta)
@@ -54,10 +54,10 @@ def criar_demandas():
         demanda = session.query(Demanda).first()
         if not demanda:
             demandas = [
-                Demanda(usuario_id=1, produto_id=2),
-                Demanda(usuario_id=2, produto_id=3),
-                Demanda(usuario_id=3, produto_id=4),
-                Demanda(usuario_id=4, produto_id=1),
+                Demanda(id=1, usuario_id=1, produto_id=2),
+                Demanda(id=2, usuario_id=2, produto_id=3),
+                Demanda(id=3, usuario_id=3, produto_id=4),
+                Demanda(id=4, usuario_id=4, produto_id=1),
             ]
             for demanda in demandas:
                 session.add(demanda)
