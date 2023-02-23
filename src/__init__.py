@@ -77,7 +77,7 @@ def criar_pedidos():
             for pedido in pedidos:
                 session.add(pedido)
                 session.commit()
-           
+
 def popular_o_banco_de_dados():
     
     criar_usuarios()
