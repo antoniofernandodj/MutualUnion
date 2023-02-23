@@ -74,10 +74,6 @@ def encontrar_correspondencias(pedidos: List[Pedido]) -> List[Correspondencia]:
                             u_of_edge=pedido1.id,
                             v_of_edge=pedido2.id
                         )
-                        
-        nx.draw(G, with_labels=True)
-        print(G.edges)
-        plt.savefig('image.png')
 
         correspondencias = []
         for pedido_oferta_id, pedido_demanda_id in G.edges():
@@ -101,11 +97,9 @@ def encontrar_correspondencias(pedidos: List[Pedido]) -> List[Correspondencia]:
         )
         
         if nao_atendidos_de or nao_atendidos_para:
-            msg = 'Usuarios não inclusos! De: {}, Para: {}'.format(
+            raise RuntimeError('Usuarios não inclusos! De: {}, Para: {}'.format(
                 str(nao_atendidos_de), str(nao_atendidos_para)
-            )
-
-            raise RuntimeError(msg)
+            ))
         else:
             print("Correspondencias válidas")
         
@@ -116,4 +110,4 @@ with Session(engine) as session:
     
     pedidos = session.query(Pedido).all()
     correspondencias = encontrar_correspondencias(pedidos=pedidos)
-    pprint(correspondencias)
+    print(correspondencias)
